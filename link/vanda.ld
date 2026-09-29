@@ -69,3 +69,5 @@ SECTIONS {
         *(.dynsym*)
     }
 }
+
+ASSERT(SIZEOF(.dynamic) == 0)
