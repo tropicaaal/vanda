@@ -1,0 +1,25 @@
+[build]
+target = "armv7a-none-eabi" # meow
+rustflags = [
+    # sets up position-independent codegen in LLVM
+    "-Crelocation-model=pic",
+    "-Clink-arg=-pie",
+
+    # this is baremetal, there is no dynamic linker, PT_INTERP is meaningless
+    "-Clink-arg=--no-dynamic-linker",
+
+    # ban text relocations, since our fixup code doesn't handle that
+    "-Clink-arg=-ztext",
+
+    # relro similarly doesnt exist since that'd require MMU bringup and there's no point
+    "-Clink-arg=-znorelro",
+
+    # linkerscwipt
+    "-Clink-arg=-Tvanda.ld",
+]
+
+# has to be done because the sysroot builds that
+# rustc ships with this target arent position-independent
+[unstable]
+build-std = ["core", "panic_abort"]
+build-std-features = ["compiler-builtins-mem"]
