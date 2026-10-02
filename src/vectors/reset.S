@@ -9,10 +9,8 @@ cpsid if @ no interrupts
 @ setup by switching to each mode and loading the stack.
 
 .macro setup_mode_stack mode, label
-    @ switch processor mode, assume cpsr in r0
-    bic r0, r0, #0x1F  @ clear mode bits
-    orr r0, r0, #\mode @ mask mode bits
-    msr cpsr_c, r0     @ cpsr_c <- r0
+    @ switch processor mode
+    msr cpsr_c, #\mode
     
     @ load the stack
     @
@@ -22,12 +20,11 @@ cpsid if @ no interrupts
     @
     @ the method is similar to what the kernel decompressor does to load its own stack:
     @ <https://github.com/torvalds/linux/blob/master/arch/arm/boot/compressed/head.S#L1517>
-    adr r1, \label @ address of label computed from pc
-    ldr sp, [r1]   @ value of label (top of the stack - compile time addr of label)
-    add sp, r1     @ add them together to cancel out label's address
+    adr r0, \label @ address of label computed from pc
+    ldr sp, [r0]   @ value of label (top of the stack - compile time addr of label)
+    add sp, r0     @ add them together to cancel out label's address
 .endm
 
-mrs r0, cpsr
 setup_mode_stack 0xDF, 0f @ sys
 setup_mode_stack 0xD2, 1f @ irq
 setup_mode_stack 0xD1, 2f @ fiq
@@ -44,14 +41,14 @@ setup_mode_stack 0xD3, 5f @ svc
 @ correct address by adding vanda's real runtime base address to their offset.
 @
 @ The linker gives us a .rel.dyn section containing a table of dynamic relocations we need
-@ to do. Our goal isus to fixup all R_ARM_RELATIVE relocation Elf32_Rel entries.
+@ to do. Our goal is to fixup all R_ARM_RELATIVE relocation Elf32_Rel entries.
 
 @ compute __rel_start/__rel_end similar to how we did the stack
-adr r0, 1f
+adr r0, 6f
 ldr r1, [r0]
 add r1, r0 @ r1 <- __rel_start
 
-adr r0, 2f
+adr r0, 7f
 ldr r2, [r0]
 add r2, r0 @ r2 <- __rel_end
 
@@ -66,7 +63,7 @@ bhs .Ldone @ bail out if the table is empty (or the start is somehow past the en
     @       encodes a symbol ID. Normally we'd want to mask out only the LSB with
     @       r4 & 0xFF, however we get away with it here because the symbol ID is
     @       always zero for R_ARM_RELATIVE, so we can just compare the whole word.
-    cmp r4, #23 @ 4 == R_ARM_RELATIVE?
+    cmp r4, #23 @ r4 == R_ARM_RELATIVE?
 
     @ apply R_ARM_RELATIVE fixup if needed
     ldreq r4, [r3, r0] @ r4 <- *(r_offset + base)
@@ -77,11 +74,11 @@ bhs .Ldone @ bail out if the table is empty (or the start is somehow past the en
     blo .Lrelocate_entry @ next entry
 
 .Ldone:
-    @ MARK: entry
-
     @ set VBAR to the load address (we place the vector table at __image_start+0x0).
+    @ TODO(tropicaaal): make sure VBAR is 32-byte aligned.
     mcr p15, 0, r0, c12, c0, 0
 
+    @ MARK: entry
     b {entry} @ we're done, jump to rust main
 
 @ relative offsets for computing label addresses above
