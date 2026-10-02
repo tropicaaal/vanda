@@ -1,8 +1,18 @@
 OUTPUT_FORMAT("elf32-littlearm")
-ENTRY(_vector_table);
+ENTRY(vector_table);
+
+PROVIDE(__sys_stack_size = 0x1000);
+PROVIDE(__irq_stack_size = 0x1000);
+PROVIDE(__fiq_stack_size = 0x1000);
+PROVIDE(__abort_stack_size = 0x1000);
+PROVIDE(__svc_stack_size = 0x1000);
+PROVIDE(__undefined_stack_size = 0x1000);
 
 SECTIONS {
+    . = 0;
+
     .text : {
+        __image_start = .;
         *(.vectors)
         *(.text .text.*)
     }
@@ -43,9 +53,23 @@ SECTIONS {
     }
 
     .stack : ALIGN(8) {
-        __stack_bottom = .;
-        . += 0x4000;
-        __stack_top = .;
+        . += __sys_stack_size;
+        __sys_stack_top = .;
+
+        . += __irq_stack_size;
+        __irq_stack_top = .;
+
+        . += __fiq_stack_size;
+        __fiq_stack_top = .;
+
+        . += __abort_stack_size;
+        __abort_stack_top = .;
+
+        . += __svc_stack_size;
+        __svc_stack_top = .;
+
+        . += __undefined_stack_size;
+        __undefined_stack_top = .;
     }
 
     __image_end = .;
@@ -69,5 +93,7 @@ SECTIONS {
         *(.dynsym*)
     }
 }
-
-ASSERT(SIZEOF(.dynamic) == 0)
+/* 
+ASSERT(SIZEOF(.dynamic) == 0, "ruh roh")
+ASSERT(SIZEOF(.dynstr) == 0, "ruh roh")
+ASSERT(SIZEOF(.dynsym) == 0, "ruh roh") */

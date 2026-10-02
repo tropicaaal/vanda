@@ -1,4 +1,11 @@
 [package]
-name = "vanda-pic"
+name = "vanda"
 version = "0.1.0"
 edition = "2024"
+
+[profile.release]
+debug = true # this is stripped out of the final binary anyways
+
+[dependencies]
+aarch32-cpu = "0.4.0"
+log = "0.4.34"
