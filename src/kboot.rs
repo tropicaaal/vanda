@@ -1,4 +1,3 @@
-use aarch32_cpu::cache;
 use core::arch::asm;
 
 /// go do some light reading:
@@ -14,7 +13,7 @@ pub unsafe fn boot_kernel(kernel_addr: u32, dtb_addr: u32) -> ! {
 
         // mask interrupts, wipe L1d
         asm!("cpsid if");
-        cache::clean_and_invalidate_l1_data_cache::<2, 5, 8>();
+        aarch32_cpu::cache::clean_and_invalidate_l1_data_cache::<2, 5, 8>();
         asm!("dsb", "isb");
         log::debug!("L1d cleaned and invalidated.");
 

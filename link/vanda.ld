@@ -1,12 +1,12 @@
 OUTPUT_FORMAT("elf32-littlearm")
 ENTRY(vector_table);
 
-PROVIDE(__sys_stack_size = 0x1000);
-PROVIDE(__irq_stack_size = 0x1000);
-PROVIDE(__fiq_stack_size = 0x1000);
-PROVIDE(__abort_stack_size = 0x1000);
-PROVIDE(__svc_stack_size = 0x1000);
-PROVIDE(__undefined_stack_size = 0x1000);
+PROVIDE(__sys_stack_size = 0x800);
+PROVIDE(__irq_stack_size = 0x800);
+PROVIDE(__fiq_stack_size = 0x800);
+PROVIDE(__abort_stack_size = 0x800);
+PROVIDE(__svc_stack_size = 0x800);
+PROVIDE(__undefined_stack_size = 0x800);
 
 SECTIONS {
     . = 0;
@@ -44,7 +44,7 @@ SECTIONS {
      * to reserve their space in the actual binary so that concatenation with the
      * kernel image is supported.
      */
-    .bss : {
+    .bss : ALIGN(4) {
         __bss_start = .;
         *(.bss .bss.*)
         /* align the end of bss for zero loop cleanliness */

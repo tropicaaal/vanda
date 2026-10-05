@@ -1,8 +1,6 @@
 @ Reset vector
 
-cpsid if @ no interrupts
-
-@ MARK: stack setup
+@ MARK: stack
 @
 @ our goal here it to setup a sane execution environment for Rust. the first
 @ order of business is getting a usable stack in each procesor mode, which we
@@ -25,6 +23,8 @@ cpsid if @ no interrupts
     add sp, r0     @ add them together to cancel out label's address
 .endm
 
+@ NOTE: the mode bits we pass to cpsr_c also include CPSR.IFT, so IRQs and FIQs also get
+@       masked here and I guess we also ensure we're in ARM state.
 setup_mode_stack 0xDF, 0f @ sys
 setup_mode_stack 0xD2, 1f @ irq
 setup_mode_stack 0xD1, 2f @ fiq
@@ -34,7 +34,7 @@ setup_mode_stack 0xD3, 5f @ svc
 
 @ ... we are now running in supervisor mode, which is what the kernel wants at boot
 
-@ MARK: dynamic relocations
+@ MARK: relocations
 @
 @ Before Rust code runs, we need to adjust absolute pointers to static data (e.g. statics
 @ referencing statics, extern statics, vtables, fat pointers, etc...) to point to the
@@ -55,7 +55,7 @@ add r2, r0 @ r2 <- __rel_end
 adr r0, __image_start @ r0 <- vanda's runtime load address
 
 cmp r1, r2 @ __rel_start >= __rel_end?
-bhs .Ldone @ bail out if the table is empty (or the start is somehow past the end)
+bhs .Lrelocate_done @ bail out if the table is empty (or the start is somehow past the end)
 .Lrelocate_entry:
     @ check the relocation entry type
     ldmia r1!, {{r3, r4}} @ r3 <- r_offset, r4 <- r_info; r1 += 8
@@ -70,16 +70,33 @@ bhs .Ldone @ bail out if the table is empty (or the start is somehow past the en
     addeq r4, r0       @ relocation += vanda_base
     streq r4, [r3, r0] @ *r4 = relocation
 
-    cmp r1, r2         @ rel_ptr < rel_end?
+    cmp r1, r2           @ rel_ptr < rel_end?
     blo .Lrelocate_entry @ next entry
 
-.Ldone:
+.Lrelocate_done:
     @ set VBAR to the load address (we place the vector table at __image_start+0x0).
-    @ TODO(tropicaaal): make sure VBAR is 32-byte aligned.
+    @ TODO(tropicaaal): check if VBAR is 32-byte aligned?
     mcr p15, 0, r0, c12, c0, 0
 
-    @ MARK: entry
-    b {entry} @ we're done, jump to rust main
+    @ MARK: bss clear
+    adr r0, 8f
+    ldr r1, [r0]
+    add r1, r0 @ r1 <- __bss_start
+
+    adr r0, 9f
+    ldr r2, [r0]
+    add r2, r0 @ r2 <- __bss_end
+
+    movs r0, #0
+
+    .Lclear_bss:
+        cmp r1, r2
+        beq .Lbss_done
+        stm r1!, {{r0}}
+        b .Lclear_bss
+    .Lbss_done:
+        @ MARK: entry
+        b {entry} @ we're done, jump to rust main
 
 @ relative offsets for computing label addresses above
 .align 2
@@ -92,3 +109,6 @@ bhs .Ldone @ bail out if the table is empty (or the start is somehow past the en
 
 6: .word __rel_start - .
 7: .word __rel_end   - .
+
+8: .word __bss_start - .
+9: .word __bss_end   - .
