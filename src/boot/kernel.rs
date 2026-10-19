@@ -4,13 +4,8 @@ use core::arch::asm;
 ///
 /// - <https://docs.kernel.org/arch/arm/booting.html>
 /// - <https://www.cs.utexas.edu/~simon/378/resources/ARMv7-AR_TRM.pdf>
-pub unsafe fn boot_kernel(kernel_addr: u32, dtb_addr: u32) -> ! {
+pub unsafe fn boot_kernel(kernel_addr: usize, dtb_addr: usize) -> ! {
     unsafe {
-        log::debug!(
-            "Hello from CPU{}! Preparing to boot kernel...",
-            aarch32_cpu::asm::core_id()
-        );
-
         // mask interrupts, wipe L1d
         asm!("cpsid if");
         aarch32_cpu::cache::clean_and_invalidate_l1_data_cache::<2, 5, 8>();

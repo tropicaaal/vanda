@@ -72,7 +72,7 @@ SECTIONS {
         __undefined_stack_top = .;
     }
 
-    __image_end = .;
+    __payload_start = .;
 
     /DISCARD/ : {
         /* stuff in ARM's ELF spec that we don't need */

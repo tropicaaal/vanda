@@ -9,10 +9,10 @@
 .macro setup_mode_stack mode, label
     @ switch processor mode
     msr cpsr_c, #\mode
-    
+
     @ load the stack
     @
-    @ this is a little more complicated than the standard ldr-with-literal people use, since 
+    @ this is a little more complicated than the standard ldr-with-literal people use, since
     @ have to offset it by our real physical load address and avoid ABS32 relocations which
     @ the linker will reject.
     @
@@ -87,19 +87,19 @@ bhs .Lrelocate_done @ bail out if the table is empty (or the start is somehow pa
     ldr r2, [r0]
     add r2, r0 @ r2 <- __bss_end
 
-    movs r0, #0
+    mov r0, #0
 
     .Lclear_bss:
         cmp r1, r2
         beq .Lbss_done
-        stm r1!, {{r0}}
+        str r0, [r1], #4
         b .Lclear_bss
     .Lbss_done:
         @ MARK: entry
         b {entry} @ we're done, jump to rust main
 
 @ relative offsets for computing label addresses above
-.align 2
+.align 6
 0: .word __sys_stack_top - .
 1: .word __irq_stack_top - .
 2: .word __fiq_stack_top - .

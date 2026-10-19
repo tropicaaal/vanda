@@ -9,3 +9,21 @@ debug = true # this is stripped out of the final binary anyways
 [dependencies]
 aarch32-cpu = "0.4.0"
 log = "0.4.34"
+
+[features]
+default = ["kernel-zimage", "initramfs-cpio"]
+
+chainload = []
+
+kernel-image = []
+kernel-zimage = []
+# kernel-fitimage = []
+
+initramfs-cpio = []
+# initramfs-gzip = []
+# initramfs-bzip2 = []
+# initramfs-lzma = []
+# initramfs-xz = []
+# initramfs-lzo = []
+# initramfs-lz4 = []
+# initramfs-zstd = []
