@@ -1,3 +1,6 @@
+> [!WARNING]
+> This is a work in progress that I just made public. Most things DON'T work yet.
+
 <img width="240px" src="./assets/banner.png" alt="vanda" />
 
 ---
