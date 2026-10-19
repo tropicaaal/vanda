@@ -40,9 +40,9 @@ Payloads (kernel images and devicetree blobs) are added to vanda through simple 
 **Supported payload types:**
 
 - Compressed kernel images (`zImage`).
-- Compressed initramfs `cpio` archives.
+- initramfs `cpio` archives.
 - Flattened device trees (`*.dtb`).
-- Uncompressed kernel images (only with the `uncompressed-kernel` feature, must be the last payload in the chain).
+- Uncompressed kernel images (only with the `kernel-image` feature, must be the last payload in the chain).
 <!-- - Flattened image trees (`fitImage`) -->
 
 Uncompressed kernel images and initramfs payloads are unsupported.
